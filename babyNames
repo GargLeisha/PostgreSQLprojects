@@ -1,0 +1,53 @@
+R code:
+
+# Create an empty data frame to store the combined data
+combined_data <- data.frame()
+
+# List all files in the directory
+file_list <- list.files(pattern = "\\.txt")
+
+# Loop through each file
+for (file in file_list) {
+  
+  # Read the data from the current file without headers
+  current_data <- read.table(file, header = FALSE, sep = "\t")  # Adjust sep if necessary
+  
+  # Extract the year from the file name using regular expressions
+  year_born <- as.numeric(gsub(".*([0-9]{4}).*", "\\1", file))
+  
+  # Add a 'Year Born' column to the current data
+  current_data$Year_Born <- year_born
+  
+  # Split the data in the first column into separate columns
+  current_data <- data.frame(do.call('rbind', strsplit(as.character(current_data$V1), ',')))
+  
+  # Rename columns for clarity
+  names(current_data) <- c("Name", "Sex", "Num_Babies")
+  
+  # Add a 'Year Born' column to the current data
+  current_data$Year_Born <- year_born
+  
+  # Append the current data to the combined data frame
+  combined_data <- rbind(combined_data, current_data)
+}
+
+write.csv(combined_data, file = "combined.csv")
+
+Sql:
+
+
+--- create table
+CREATE TABLE names (
+	id INT,
+    Name VARCHAR(255),
+	Sex VARCHAR(1),
+    Num_Babies INT,
+    Year_Born INT
+);
+
+
+--assigns a rank for each name for each year 
+SELECT Name, Year_Born, Num_Babies, RANK() OVER (PARTITION BY Year_Born ORDER BY Num_Babies DESC) AS rank
+FROM names
+GROUP BY Name, Year_Born, Num_Babies
+ORDER BY Year_Born, rank;
