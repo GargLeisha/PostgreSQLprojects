@@ -1,0 +1,26 @@
+SELECT DISTINCT coursetitle, gpa3.subject, gpa3.number, instructors, COUNT(instructors) AS sections, SUM(gpa3.students) AS students, 
+(SELECT DISTINCT degreeattributes
+	FROM coursecatalog
+	WHERE gpa3.subject = coursecatalog.subject AND gpa3.number = coursecatalog.number  
+	LIMIT 1) AS Geneds, ROUND(SUM(4.0 * aplus + 4.0 * a + 3.7 * aminus + 3.3 * bplus + 3.0 * b + 2.7 * bminus + 2.3 * cplus + 2 * c + 1.7 * cminus
+	   + 1.3 * dplus + 1 * d + 0.7 * dminus + 0 * f)/SUM(aplus + a + aminus + bplus + b + bminus + cplus + c + cminus
+	   + dplus +d + dminus + f),2) AS averagegpa, 
+	ROUND((SUM(aplus + a + aminus)/(SUM(aplus + a + aminus + bplus + b + bminus + cplus + c + cminus
+	   + dplus +d + dminus + f)) * 100), 1) AS apercent,
+	ROUND((SUM(bplus + b + bminus)/(SUM(aplus + a + aminus + bplus + b + bminus + cplus + c + cminus
+	   + dplus +d + dminus + f)) * 100), 1) AS bpercent,
+	ROUND((SUM(cplus + c + cminus)/(SUM(aplus + a + aminus + bplus + b + bminus + cplus + c + cminus
+	   + dplus +d + dminus + f)) * 100), 1) AS cpercent,
+	ROUND((SUM(dplus + d + dminus)/(SUM(aplus + a + aminus + bplus + b + bminus + cplus + c + cminus
+	   + dplus +d + dminus + f)) * 100), 1) AS dpercent,
+	ROUND((SUM(f)/(SUM(aplus + a + aminus + bplus + b + bminus + cplus + c + cminus
+	   + dplus +d + dminus + f)) * 100), 1) AS fpercent
+FROM gpa3
+WHERE gpa3.year > 2018 AND instructors IS NOT NULL AND (SELECT DISTINCT degreeattributes
+	FROM coursecatalog
+	WHERE gpa3.subject = coursecatalog.subject AND gpa3.number = coursecatalog.number
+	) IS NOT NULL
+GROUP BY coursetitle, gpa3.subject, gpa3.number, instructors
+ORDER BY gpa3.subject DESC, gpa3.number DESC;
+
+
