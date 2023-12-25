@@ -1,0 +1,104 @@
+
+
+WITH medalsGiven AS (
+  SELECT DISTINCT
+    year,
+    team,
+    event,
+    medal
+  FROM data
+  WHERE 
+    season = 'Summer'
+	
+	AND medal IS NOT NULL
+    AND (
+      LOWER(event) LIKE '%team%' 
+      OR LOWER(event) LIKE '%doubles%' OR LOWER(event) LIKE '%four%' OR LOWER(event) LIKE '%hockey%' OR LOWER(event) LIKE '%quadruple%'  OR LOWER(event) LIKE '%eights%' 
+		OR LOWER(event) LIKE '%football%' OR LOWER(event) LIKE '%handball%'  OR LOWER(event) LIKE '%4 x%' OR LOWER(event) LIKE '%basketball%' OR LOWER(event) LIKE '%volleyball%'
+		OR LOWER(event) LIKE '%polo%' OR LOWER(event) LIKE '%synchronized%'  OR LOWER(event) LIKE '%skiff%' OR LOWER(event) LIKE '%two person%' OR LOWER(event) LIKE '%baseball%' 
+		OR LOWER(event) LIKE '%softball%'OR LOWER(event) LIKE '%rugby%' OR LOWER(event) LIKE '%2 x%' OR LOWER(event) LIKE '%3 x%' OR LOWER(event) LIKE '%cricket%' OR LOWER(event) LIKE '%17-man%'
+		OR LOWER(event) LIKE '%6-man%' OR LOWER(event) LIKE '%pair%' OR LOWER(event) LIKE '%seven%' OR LOWER(event) LIKE '%three person%' OR LOWER(event)  LIKE '%medley relay%' 
+		OR LOWER(event) LIKE '%double scull%' OR LOWER(event)  LIKE 'sailing mixed 5.5 metres' OR LOWER(event)  LIKE 'sailing mixed 6 metres'  OR LOWER(event)  LIKE 'sailing mixed 8 metres' OR LOWER(event) LIKE '%bobsleigh%'
+		OR LOWER(event) LIKE '%tug-of-war%' OR LOWER(event) LIKE '%lacrosse%' 
+
+    )
+	GROUP BY year, team, event, medal
+	
+  UNION ALL
+  SELECT 
+    year,
+    team,
+    event,
+    medal
+  FROM data
+  WHERE 
+    medal IS NOT NULL AND
+  season = 'Summer' AND
+     LOWER(event) NOT LIKE '%team%' 
+      AND LOWER(event) NOT LIKE '%doubles%' AND LOWER(event) NOT LIKE '%four%' AND LOWER(event) NOT LIKE '%hockey%' AND LOWER(event) NOT LIKE '%quadruple%' AND LOWER(event) NOT LIKE '%eights%' 
+		AND LOWER(event) NOT LIKE '%football%' AND LOWER(event) NOT LIKE '%handball%' AND LOWER(event) NOT LIKE '%4 x%' AND LOWER(event) NOT LIKE '%basketball%' AND LOWER(event) NOT LIKE '%volleyball%'
+		AND LOWER(event) NOT LIKE '%eights%' AND LOWER(event) NOT LIKE '%polo%' AND LOWER(event) NOT LIKE '%synchronized%' AND LOWER(event) NOT LIKE '%skiff%' AND LOWER(event) NOT LIKE '%two person%' AND LOWER(event) NOT LIKE '%baseball%' 
+	AND LOWER(event) NOT LIKE '%softball%' AND LOWER(event) NOT LIKE '%rugby%' AND LOWER(event) NOT LIKE '%2 x%' AND LOWER(event) NOT LIKE '%3 x%' AND LOWER(event) NOT LIKE '%cricket%' AND LOWER(event) NOT LIKE '%17-man%'
+		AND LOWER(event) NOT LIKE '%6-man%' AND LOWER(event) NOT LIKE '%pair%' AND LOWER(event) NOT LIKE '%seven%' AND LOWER(event) NOT LIKE '%three person%' AND LOWER(event) NOT LIKE '%medley relay%' AND LOWER(Event) NOT LIKE '%bobsleigh%'
+	AND LOWER(event) NOT LIKE '%double scull%' AND LOWER(event) NOT LIKE '%bobsleigh%' AND LOWER(event) NOT LIKE 'sailing mixed 5.5 metres' AND LOWER(event)  NOT LIKE 'sailing mixed 6 metres'  AND LOWER(event) NOT LIKE 'sailing mixed 8 metres'
+	AND LOWER(event) NOT LIKE '%tug-of-war%' AND LOWER(event) NOT LIKE '%lacrosse%' 
+	
+
+
+	
+)
+
+
+
+-- the above intermediate step is needed to eliminate group events from being counted multiple times
+, medals2020 AS (
+
+  SELECT
+    year,
+    team,
+    gold AS Gold,
+    silver AS Silver,
+    bronze AS Bronze,
+    total AS Total_Medals
+  FROM tokyo_data
+)
+
+
+, medalsCount AS (
+  SELECT year, team, 
+         COUNT(CASE WHEN medal = 'Gold' THEN 1 END) AS Gold,
+         COUNT(CASE WHEN medal = 'Silver' THEN 1 END) AS Silver,
+         COUNT(CASE WHEN medal = 'Bronze' THEN 1 END) AS Bronze,
+         COUNT(medal) AS Total_Medals
+  FROM medalsGiven
+  GROUP BY year, team
+UNION ALL 
+	SELECT year, team, Gold, Silver, Bronze, Total AS Total_Medals
+	FROM tokyo_data
+  ORDER BY year DESC, team DESC
+
+
+)
+
+
+
+,ranked AS (SELECT year, team, Gold, Silver, Bronze, Total_Medals, RANK() OVER(PARTITION BY year ORDER BY total_medals DESC) AS ranking 
+FROM medalsCount
+ORDER BY year DESC, Total_Medals DESC, team DESC, ranking)
+
+
+,cumulative AS (SELECT year, team, Gold, Silver, Bronze, Total_Medals, ranking, SUM(Gold) OVER(PARTITION BY team ORDER BY Year) AS cumulativeG, SUM(Silver) OVER(PARTITION BY team ORDER BY YEAR) AS cumulativeS, 
+SUM(Bronze) OVER(PARTITION BY team ORDER BY Year) AS cumulativeB, SUM(Total_Medals) OVER(PARTITION BY team ORDER BY year) AS cumulativeMedals
+FROM ranked
+ORDER BY year DESC, cumulativeMedals DESC)
+
+SELECT year, team,  gold, silver, bronze, total_medals, ranking AS current_ranking, cumulativeb, cumulatives, cumulativeg, cumulativeMedals, RANK() OVER(PARTITION BY year ORDER BY cumulativemedals DESC) AS overall_ranking
+FROM cumulative
+ORDER BY year DESC,  current_ranking, overall_ranking;
+
+
+
+
+
+
+
