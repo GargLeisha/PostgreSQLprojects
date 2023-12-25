@@ -48,7 +48,7 @@ WITH medalsGiven AS (
 
 
 
--- the above intermediate step is needed to eliminate group events from being counted multiple times
+-- the above intermediate step is needed to eliminate group events from being counted multiple times while mainting instances of ties between people from the same country
 , medals2020 AS (
 
   SELECT
