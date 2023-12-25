@@ -1,5 +1,3 @@
-
-
 WITH medalsGiven AS (
   SELECT DISTINCT
     year,
