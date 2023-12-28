@@ -1,3 +1,10 @@
+datasets:
+
+1. https://www.kaggle.com/datasets/surajjha101/countries-olympics-medals-since-1896
+2. https://www.kaggle.com/datasets/berkayalan/2021-olympics-medals-in-tokyo
+
+
+
 WITH medalsGiven AS (
   SELECT DISTINCT
     year,
