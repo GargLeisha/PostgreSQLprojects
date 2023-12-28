@@ -1,3 +1,11 @@
+datasets:
+
+1. https://github.com/wadefagen/datasets/blob/master/gpa/uiuc-gpa-dataset.csv
+2. https://discovery.cs.illinois.edu/dataset/course-catalog/
+
+
+
+
 SELECT DISTINCT coursetitle, gpa3.subject, gpa3.number, instructors, COUNT(instructors) AS sections, SUM(gpa3.students) AS students, 
 (SELECT DISTINCT degreeattributes
 	FROM coursecatalog
